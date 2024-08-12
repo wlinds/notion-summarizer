@@ -1,0 +1,7 @@
+{
+    "sender" : "your email",
+    "receiver" : "reviever email",
+    "subject" : "subject",
+    "body" : "email body",
+    "file_name" : "attachment file name"
+}
