@@ -16,15 +16,16 @@ def main():
     payload = get_payload(week="past_week")
     data = fetch(DB_ID, payload)
     formated_rows = process_data(data)
-    df, plot = get_df(formated_rows, "Time")
+    df, plot = get_df(formated_rows, "Time", "schedule")
 
-    # TODO Below columns are created for the plot -- should be refactored.
-    df = df.drop(columns=["StartDateTime", "EndDateTime", "Duration", "Day", "y" ])
+    if plot:
+        plot.savefig(temp_file+".png")
 
-    plot.savefig(temp_file+".png")
     df.to_excel(temp_file+".xlsx", index=False)
 
     elapsed = time.time() - start_timer
+
+    attachments = [temp_file+".xlsx", temp_file+".png"] if plot else temp_file+".xlsx"
 
     if write_email(ed['sender'],
                 ed['receiver'],
@@ -33,12 +34,13 @@ def main():
                 <p style='font-family: Courier, sans-serif; font-size: 10px;'>
                 Report fetched {datetime.datetime.now()} and sent in {elapsed:.3f} seconds.<br>
                 Source Code: <a href='https://github.com/wlinds/notion-summarizer'>wlinds/notion-summarizer</a></p>""", 
-                [temp_file+".xlsx", temp_file+".png"], is_html=True) == True:
+                attachments, is_html=True) == True:
         print(f"""• Notion-Summarizer | {datetime.datetime.now()} | Email "{ed['subject']} {ed['week']}" successfully sent to {ed['receiver']}.""")
 
         try:
             os.remove(temp_file+".xlsx")
-            os.remove(temp_file+".png")
+            if plot:
+                os.remove(temp_file+".png")
         except OSError as e:
             print(f"Error deleting file: {e}")
     else:

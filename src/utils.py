@@ -3,7 +3,7 @@ import json
 import pandas as pd
 import datetime
 
-from plots import get_plot
+from plots import *
 
 # TODO Add error handling for property "Time" missing 
 def get_payload(property_name="Time", week="past_week"):
@@ -39,15 +39,20 @@ def get_email_details(json_file_path=None):
 
     return email_details
 
-def get_df(csv, column_name):
-    # df = pd.read_csv(csv)
-    df = pd.DataFrame(csv)
+def get_df(data, time_column_name, plot_type=None):
+    """
+    - data: Input data (csv)
+    - time_column_name: Name of column to fetch datetime from
+    - plot_type: Valid arguments: None, "schedule"
+
+    Returns 
+    """
+    df = pd.DataFrame(data)
     
-    start_end_times = df[column_name].str.split(' -> ', expand=True)
+    start_end_times = df[time_column_name].str.split(' -> ', expand=True)
     
     start_times = pd.to_datetime(start_end_times[0])
     end_times = pd.to_datetime(start_end_times[1])
-
 
     df['StartDate'] = start_times.dt.day
     df['StartMonth'] = start_times.dt.month
@@ -57,11 +62,13 @@ def get_df(csv, column_name):
     df['EndMonth'] = end_times.dt.month
     df['EndYear'] = end_times.dt.year
     df['EndTime'] = end_times.dt.strftime('%H:%M')
-    
-    plot = get_plot(df, start_times, end_times)
-    df.drop(columns=["StartDateTime", "EndDateTime", "Duration", "Day", "y" ])
 
-    df = df.drop(columns=[column_name])
+    plot = None
+    if plot_type == "schedule":
+        plot = get_schedule_plot(df, start_times, end_times)
+        df = df.drop(columns=["StartDateTime", "EndDateTime", "Duration", "Day", "y" ])
+
+    df = df.drop(columns=[time_column_name])
 
     column_order = ['Customer', 'Tags', 'StartDate', 'StartMonth', 'StartYear', 'StartTime', 'EndDate', 'EndMonth', 'EndYear', 'EndTime', 'Note', 'Tim']
     df = df[column_order + [col for col in df.columns if col not in column_order]]

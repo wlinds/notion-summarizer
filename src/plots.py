@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-def get_plot(df, start_times, end_times, plot_title="Time report"):
+def get_schedule_plot(df, start_times, end_times, plot_title="Time report"):
     assert "Tags" in df, "Error: 'Tags' column is missing from the dataframe"
 
     df['StartDateTime'] = pd.to_datetime(df['Time'].str.split(' -> ').str[0])

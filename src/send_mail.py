@@ -19,6 +19,9 @@ def write_email(sender, receiver, subject, body, filenames=None, is_html=False):
     msg['Subject'] = subject
     msg['Date'] = formatdate(localtime=True)
 
+    if isinstance(filenames, str):
+        filenames = [filenames]
+
     if filenames:
         for filename in filenames:
             with open(filename, "rb") as f:
