@@ -1,51 +1,49 @@
-import os
-import sys
-import json
-import time
-import datetime
+import os, sys, json, time, datetime
 
 from api import *
-from utils import get_current_week, get_email_details
+from utils import get_current_week, get_email_details, get_df
 from send_mail import write_email
 
+load_dotenv()
+
 def main():
-    time_now = datetime.datetime.now()
     start_timer = time.time()
     ed = get_email_details()
     ed['week'] = get_current_week()-1
-    formatted_start_date = datetime.date.fromisocalendar(datetime.datetime.now().year, ed['week'], 1)
-    
-    # TODO Add error handling for property "Time" missing 
-    payload = {
-    f"filter": {
-        "property": "Time",
-        "date": {
-        "on_or_after": str(formatted_start_date)
-        }
-    }
-    }
 
+    temp_file = f"{ed['file_name']}_{ed['week']}"
+
+    payload = get_payload(week="past_week")
     data = fetch(DB_ID, payload)
     formated_rows = process_data(data)
-    df = format_excel(formated_rows, "Time")
+    df, plot = get_df(formated_rows, "Time")
 
-    temp_file = f"{ed['file_name']}_{ed['week']}.xlsx"
-    df.to_excel(temp_file, index=False)
+    # TODO Below columns are created for the plot -- should be refactored.
+    df = df.drop(columns=["StartDateTime", "EndDateTime", "Duration", "Day", "y" ])
+
+    plot.savefig(temp_file+".png")
+    df.to_excel(temp_file+".xlsx", index=False)
 
     elapsed = time.time() - start_timer
 
-    write_email(ed['sender'], ed['receiver'], f"{ ed['subject']} {ed['week']}", f"<p>{ed['body']}</p><br> <p style='font-family: Courier, sans-serif; font-size: 10px;'>Report fetched {time_now} and sent in {elapsed:.3f} seconds.</p>", temp_file, is_html=True)
+    if write_email(ed['sender'],
+                ed['receiver'],
+                f"{ ed['subject']} {ed['week']}",
+                f"""<p>{ed['body']}</p><br>
+                <p style='font-family: Courier, sans-serif; font-size: 10px;'>
+                Report fetched {datetime.datetime.now()} and sent in {elapsed:.3f} seconds.<br>
+                Source Code: <a href='https://github.com/wlinds/notion-summarizer'>wlinds/notion-summarizer</a></p>""", 
+                [temp_file+".xlsx", temp_file+".png"], is_html=True) == True:
+        print(f"""• Notion-Summarizer | {datetime.datetime.now()} | Email "{ed['subject']} {ed['week']}" successfully sent to {ed['receiver']}.""")
 
-    # format_email(ed['sender'], ed['receiver'], f"{ed['subject'], {ed['week']} } {sys.getsizeof(temp_file)}" + f" V.{ed['week']}", f"<p>{ed['body']}</p><br> <p style='font-family: Courier, sans-serif; font-size: 10px;'>Report fetched {time_now} and sent in {elapsed:.3f} seconds.</p>", temp_file, is_html=True)
+        try:
+            os.remove(temp_file+".xlsx")
+            os.remove(temp_file+".png")
+        except OSError as e:
+            print(f"Error deleting file: {e}")
+    else:
+        print("Could not send email. Files have been saved locally instead.")
 
-
-
-    try:
-        os.remove(temp_file)
-    except OSError as e:
-        print(f"Error deleting file: {e}")
-    
-    print(f"Email successfully sent.")
 
 if __name__ == "__main__":
     main()

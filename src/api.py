@@ -5,13 +5,22 @@ import pandas as pd
 from dotenv import load_dotenv
 import datetime
 
-from utils import get_current_week, format_excel
+from utils import get_current_week
 
 load_dotenv()
 
 NOTION_API_BASE_URL = "https://api.notion.com/v1/"
 NOTION_TOKEN = os.getenv("NOTION_TOKEN")
 DB_ID = os.getenv("DB_ID")
+
+def get_payload(property_name="Time", week="past_week"):
+# TODO Add error handling for property "Time" missing 
+  payload = {
+    "filter": {
+        "property": property_name,
+        "date" : { week : {} }}}
+
+  return payload
 
 
 def get_headers(NOTION_TOKEN):
@@ -74,21 +83,4 @@ def value_processor(value):
 
 
 if __name__ == "__main__":
-    previous_week_start = datetime.date.fromisocalendar(datetime.datetime.now().year, get_current_week()-1, 1)
-    
-    payload = {
-    f"filter": {
-        "property": "Time",
-        "date": {
-        "on_or_after": str(previous_week_start)
-        }
-    }
-    }
-    
-
-    all_data = fetch(DB_ID, payload)
-    all_rows = process_data(all_data)
-    df = pd.DataFrame(all_rows)
-    # df.to_csv(os.path.join(os.getcwd(), "notion.csv"), index=False)
-
-    df2 = format_excel(all_rows, "Time")
+    pass
