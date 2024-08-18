@@ -4,8 +4,7 @@ import json
 import pandas as pd
 from dotenv import load_dotenv
 import datetime
-
-from utils import get_current_week
+from pathlib import Path
 
 load_dotenv()
 
@@ -14,13 +13,19 @@ NOTION_TOKEN = os.getenv("NOTION_TOKEN")
 DB_ID = os.getenv("DB_ID")
 
 def get_payload(property_name="Time", week="past_week"):
-# TODO Add error handling for property "Time" missing 
-  payload = {
-    "filter": {
-        "property": property_name,
-        "date" : { week : {} }}}
+    """
+    Constructs a payload to filter the query.
+    - property_name: Column name with datetime object(s). Can include end_time.
+    - week: Valid arguments: "past_week" or "next_week"
+    """
 
-  return payload
+    payload = {
+                "filter": {
+                "property": property_name,
+                "date" : { week : {} }}
+    }
+
+    return payload
 
 
 def get_headers(NOTION_TOKEN):
@@ -32,6 +37,10 @@ def get_headers(NOTION_TOKEN):
 
 
 def fetch(database_id, payload = {}):
+    if not Path("../.env").exists() and not Path(".env").exists():
+        print(".env file not found! Create an .env and enter values for NOTION_TOKEN, DB_ID, EMAIL_APP_PASSWORD")
+        return None
+
     url = f"{NOTION_API_BASE_URL}databases/{database_id}/query"
 
     try:
