@@ -37,7 +37,8 @@ def get_headers(NOTION_TOKEN):
 
 
 def fetch(database_id, payload = {}):
-    if not Path("../.env").exists() and not Path(".env").exists():
+    if not (Path(__file__).parent.parent / ".env").exists():
+    
         print(".env file not found! Create an .env and enter values for NOTION_TOKEN, DB_ID, EMAIL_APP_PASSWORD")
         return None
 
