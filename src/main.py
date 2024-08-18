@@ -1,46 +1,42 @@
 import os, sys, json, time, datetime
 
 from api import *
-from utils import get_current_week, get_email_details, get_df
+from utils import get_email_details, get_df
 from send_mail import write_email
 
 load_dotenv()
 
 def main():
     start_timer = time.time()
+    
+    datetime_col = "Time"
     ed = get_email_details()
-    ed['week'] = get_current_week()-1
+    ed['week'] = datetime.datetime.now().isocalendar()[1] - 1
+    file_name = f"{ed['file_name']}_{ed['week']}" # Adjusted filename to past week
 
-    temp_file = f"{ed['file_name']}_{ed['week']}"
+    data = fetch(DB_ID, get_payload(property_name=datetime_col, week="past_week"))
 
-    payload = get_payload(week="past_week")
-    data = fetch(DB_ID, payload)
-    formated_rows = process_data(data)
-    df, plot = get_df(formated_rows, "Time", "schedule")
+    if data:
+        formatted_rows = process_data(data)
+    else: return
+
+    df, plot = get_df(formatted_rows, datetime_col, "schedule")
 
     if plot:
-        plot.savefig(temp_file+".png")
+        plot.savefig(file_name+".png")
 
-    df.to_excel(temp_file+".xlsx", index=False)
+    df.to_excel(file_name+".xlsx", index=False)
 
-    elapsed = time.time() - start_timer
+    attachments = [file_name+".xlsx", file_name+".png"] if plot else file_name+".xlsx"
 
-    attachments = [temp_file+".xlsx", temp_file+".png"] if plot else temp_file+".xlsx"
-
-    if write_email(ed['sender'],
-                ed['receiver'],
-                f"{ ed['subject']} {ed['week']}",
-                f"""<p>{ed['body']}</p><br>
-                <p style='font-family: Courier, sans-serif; font-size: 10px;'>
-                Report fetched {datetime.datetime.now()} and sent in {elapsed:.3f} seconds.<br>
-                Source Code: <a href='https://github.com/wlinds/notion-summarizer'>wlinds/notion-summarizer</a></p>""", 
-                attachments, is_html=True) == True:
+    ed['elapsed'] = time.time() - start_timer
+    if write_email(ed, attachments, is_html=True) == True:
         print(f"""• Notion-Summarizer | {datetime.datetime.now()} | Email "{ed['subject']} {ed['week']}" successfully sent to {ed['receiver']}.""")
 
         try:
-            os.remove(temp_file+".xlsx")
+            os.remove(file_name+".xlsx")
             if plot:
-                os.remove(temp_file+".png")
+                os.remove(file_name+".png")
         except OSError as e:
             print(f"Error deleting file: {e}")
     else:
