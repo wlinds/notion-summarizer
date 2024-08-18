@@ -14,8 +14,6 @@ def get_payload(property_name="Time", week="past_week"):
 
     return payload
 
-def get_current_week():
-    return datetime.datetime.now().isocalendar()[1]
 
 def get_email_details(json_file_path=None):
     default_path = os.path.join(os.path.dirname(__file__), "email-details.json")
@@ -79,7 +77,4 @@ def get_df(data, time_column_name, plot_type=None):
 
 
 if __name__ == "__main__":
-    email_dict = get_email_details()
-    email_dict['week'] = get_current_week()-1
-    print(email_dict)
-    print(email_dict['sender'][-9::])
+    pass
