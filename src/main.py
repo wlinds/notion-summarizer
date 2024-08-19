@@ -6,6 +6,8 @@ from utils import get_email_details, get_df, cleanup_files
 from send_mail import compose_and_send
 from model import get_basic_summary
 
+USE_LOCAL_LLM = False
+
 def generate_report(data, datetime_col, plot_type, file_name):
     df, plot = get_df(data, datetime_col, plot_type)
 
@@ -31,8 +33,10 @@ def main():
     clean_data = process_data(data)
     attachments = generate_report(clean_data, datetime_col, "schedule", file_name)
 
+    if USE_LOCAL_LLM:
+        email_details['body'] += get_basic_summary(clean_data, "Note")
+
     email_details['elapsed'] = time.time() - start_timer
-    email_details['body'] += get_basic_summary(clean_data, "Note")
 
     if compose_and_send(email_details, attachments):
         cleanup_files(attachments)
