@@ -75,6 +75,13 @@ def get_df(data, time_column_name, plot_type=None):
     
     return df, plot
 
+def cleanup_files(filenames):
+    for f in filenames:
+        try:
+            os.remove(f)
+        except OSError as e:
+            print(f"Error deleting file: {e}")
+
 
 if __name__ == "__main__":
     pass
