@@ -6,11 +6,13 @@ from email.mime.base import MIMEBase
 from email.utils import formatdate
 from email import encoders
 
+from datetime import datetime as dt
+
 from dotenv import load_dotenv
 
 load_dotenv()
 
-def write_email(email_details, filenames=None, is_html=False):
+def compose_and_send(email_details, filenames=None, is_html=True, verbose=True):
     msg = MIMEMultipart()
     msg.attach(MIMEText(f"""
                 <p>{email_details['body']}</p><br>
@@ -39,11 +41,11 @@ def write_email(email_details, filenames=None, is_html=False):
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
             smtp.login(email_details['sender'], os.getenv('EMAIL_APP_PASSWORD'))
             smtp.send_message(msg)
-            return 1
+        
+        if verbose:
+            print(f"""• Notion-Summarizer | {dt.now()} | Email "{email_details['subject']} {email_details['week']}" successfully sent to {email_details['receiver']}.""")
+        return 1
     else:
         print("Your email provider is not supported. Check send_email.py to configure SSL")
         
     return 0
-
-if __name__ == "__main__":
-    pass
