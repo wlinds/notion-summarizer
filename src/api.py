@@ -12,18 +12,47 @@ NOTION_API_BASE_URL = "https://api.notion.com/v1/"
 NOTION_TOKEN = os.getenv("NOTION_TOKEN")
 DB_ID = os.getenv("DB_ID")
 
-def get_payload(property_name="Time", week="past_week"):
+def get_payload(property_name="Time", week=None, start_date=None, end_date=None):
     """
     Constructs a payload to filter the query.
-    - property_name: Column name with datetime object(s). Can include end_time.
+    - property_name: Column name with datetime object(s). Can include end_time property.
     - week: Valid arguments: "past_week" or "next_week"
+    - start_date: The start of the date range (inclusive).
+    - end_date: The end of the date range (inclusive).
     """
 
+    # Default behavior ("past_week" or "next_week")
+    if week:
+        payload = {
+                    "filter": {
+                    "property": property_name,
+                    "date" : { week : {} }}
+        }
+
+        return payload
+
+    # Custom date interval
     payload = {
-                "filter": {
-                "property": property_name,
-                "date" : { week : {} }}
+        "filter": {
+            "and": []
+        }
     }
+
+    if start_date:
+        payload["filter"]["and"].append({
+            "property": property_name,
+            "date": {
+                "on_or_after": start_date
+            }
+        })
+
+    if end_date:
+        payload["filter"]["and"].append({
+            "property": property_name,
+            "date": {
+                "on_or_before": end_date
+            }
+        })
 
     return payload
 

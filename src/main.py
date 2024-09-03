@@ -1,5 +1,6 @@
 import os, sys, json, time
 from datetime import datetime as dt
+from datetime import timedelta
 
 from api import *
 from utils import get_email_details, get_df, cleanup_files
@@ -27,6 +28,10 @@ def main():
 
     file_name = f"{email_details['file_name']}_{email_details['week']}"
     data = fetch(DB_ID, get_payload(property_name=datetime_col, week="past_week"))
+
+    # start_date = (dt.now() - timedelta(days=8)).strftime('%Y-%m-%d')
+    # end_date = dt.now().strftime('%Y-%m-%d')
+    # data = fetch(DB_ID, get_payload(datetime_col, None, start_date, end_date))
 
     if not data: return
     
